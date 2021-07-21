@@ -11,7 +11,8 @@ app.set('view engine', 'ejs');
 
 //app.use(bodyParser.urlencoded({ extended: true })); //made it into .json
 app.use(express.static("public"));
-app.use(bodyParser.json())
+app.use(bodyParser.json());
+//app.use({ useUnifiedTopology: true });
 var cors = require('cors')
 app.use(cors())
 
@@ -36,6 +37,23 @@ app.get("/lists", function (req, res) {
 	})
 })
 
+
+app.get('/lists/:id', function (req, res) {
+	const id = req.params.id;
+	List.findById(id)
+	.then(data => {
+		if (!data) 
+		res.status(404).send({ message: "Item not found with id" + id});
+		else res.send(data);
+	})
+	.catch(err => {
+		res
+			.status(500)
+			.send({ message: "Error retrieving list item with id" + id})
+	})
+})
+
+
 app.post("/lists", function(req, res) {
 	const newList = new List({
 	name: req.body.name,
@@ -52,6 +70,27 @@ app.post("/lists", function(req, res) {
 	});
 });
 
+app.delete('/lists/:id', function (req, res) {
+	const id = req.params.id;
+	List.findByIdAndRemove(id)
+	.then(data => {
+		if (!data) {
+		  res.status(404).send({
+			message: `Cannot delete Item with id=${id}. Maybe Item was not found!`
+		  });
+		} else {
+		  res.send({
+			message: "Item was deleted successfully!"
+		  });
+		}
+	  })
+	  .catch(err => {
+		res.status(500).send({
+		  message: "Could not delete Item with id=" + id
+		});
+	  });
+})
+
 app.delete('/lists/:id', function(req, res) {
 	let id = req.params.id;
 	List.findOneAndRemove({_id: id}, function(err) {
@@ -63,60 +102,7 @@ app.delete('/lists/:id', function(req, res) {
 	})
 });
 
-
-
-app.route('/lists/:id').delete((req, res) => {
-    List.findByIdAndDelete(req.params.id)
-      .then(() => res.json('List Item deleted.'))
-      .catch(err => res.status(400).json('Error: ' + err));
-  });
- 
-
-//app.delete("/lists", function(req, res){
-//	List.deleteMany(function(err){
-//		if (!err) {
-//			res.send("Successfully deleted entire list.");
-//		} else {
-//			res.send(err);
-//		}
-//	})
-//})
-
-//app.delete("/lists/:_id", function(listId, done){
-//	List.findByIdAndRemove(listId, (err, deletedRecord) => {
-//		if (err) {
-//			console.log(err);
-//		} else {
-//			done(null, deletedRecord)
-//		}
-//	})
-//})
-
-//app.delete("/lists", (req, res, next) => {
-//	const id = req.params.listId
-//	List.remove({_id: id})
-//	.exec()
-//	.then(res => {
-//		res.status(200).json(result);
-//	})
-//	.catch(err => {
-//		console.log(err);
-//		res.status(500).json({
-//			error: err
-//		})
-//	})
-//})
-
-//let removeById = function (personID, done) {
-//	List.findByIdAndRemove(personID, (err, deletedRecord) => {
-//		if (err) {
-//			console.log(err);
-//		} else {
-//			done(null, deletedRecord)
-//		}
-//	})
-//}
-
 app.listen(3000, function() {
-  console.log("Server started on port 3000");
-});
+	console.log("Server started on port 3000");
+  });
+
